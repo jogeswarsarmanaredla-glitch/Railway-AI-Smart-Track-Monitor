@@ -1,0 +1,254 @@
+{
+  "model_version": "1.0.0",
+  "trained_at": "2026-11-14T03:11:46.178244+00:00",
+  "dataset_provenance": "SYNTHETIC_SIMULATION_ENGINE_RUNS",
+  "is_simulated": true,
+  "safety_disclaimer": "Non-operational benchmark advisory. This model was trained and evaluated on synthetic benchmark telemetry. Outputs represent algorithmic diagnostic signals and do not certify actual operational railway safety.",
+  "random_seed": 42,
+  "classes": [
+    "NORMAL",
+    "RAIL_CORRUGATION",
+    "IMPACT_DEFECT",
+    "THERMAL_STRESS"
+  ],
+  "feature_names": [
+    "vx_rms",
+    "vy_rms",
+    "vz_rms",
+    "v_total_rms",
+    "vx_mean",
+    "vy_mean",
+    "vz_mean",
+    "vx_std",
+    "vy_std",
+    "vz_std",
+    "vx_p2p",
+    "vy_p2p",
+    "vz_p2p",
+    "vz_kurtosis",
+    "vz_crest_factor",
+    "temp_mean",
+    "temp_max",
+    "temp_min",
+    "temp_slope_c_per_min",
+    "hum_mean",
+    "hum_std",
+    "train_speed_mean",
+    "window_duration_seconds"
+  ],
+  "normal_baseline_stats": {
+    "vx_rms": {
+      "mean": 0.17296,
+      "std": 0.03491
+    },
+    "vy_rms": {
+      "mean": 0.08843,
+      "std": 0.01578
+    },
+    "vz_rms": {
+      "mean": 0.24787,
+      "std": 0.0454
+    },
+    "v_total_rms": {
+      "mean": 0.18245,
+      "std": 0.03077
+    },
+    "vx_mean": {
+      "mean": 0.16985,
+      "std": 0.03544
+    },
+    "vy_mean": {
+      "mean": 0.08629,
+      "std": 0.01613
+    },
+    "vz_mean": {
+      "mean": 0.24344,
+      "std": 0.04595
+    },
+    "vx_std": {
+      "mean": 0.03141,
+      "std": 0.00638
+    },
+    "vy_std": {
+      "mean": 0.01878,
+      "std": 0.0033
+    },
+    "vz_std": {
+      "mean": 0.04544,
+      "std": 0.00794
+    },
+    "vx_p2p": {
+      "mean": 0.1136,
+      "std": 0.02211
+    },
+    "vy_p2p": {
+      "mean": 0.07102,
+      "std": 0.01367
+    },
+    "vz_p2p": {
+      "mean": 0.16816,
+      "std": 0.03579
+    },
+    "vz_kurtosis": {
+      "mean": -0.504,
+      "std": 0.72641
+    },
+    "vz_crest_factor": {
+      "mean": 1.34604,
+      "std": 0.10579
+    },
+    "temp_mean": {
+      "mean": 31.76085,
+      "std": 3.95321
+    },
+    "temp_max": {
+      "mean": 32.39829,
+      "std": 3.93453
+    },
+    "temp_min": {
+      "mean": 31.10427,
+      "std": 3.97618
+    },
+    "temp_slope_c_per_min": {
+      "mean": -0.53351,
+      "std": 1.55586
+    },
+    "hum_mean": {
+      "mean": 61.11214,
+      "std": 10.10293
+    },
+    "hum_std": {
+      "mean": 0.63598,
+      "std": 0.13144
+    },
+    "train_speed_mean": {
+      "mean": 94.58017,
+      "std": 27.66757
+    },
+    "window_duration_seconds": {
+      "mean": 37.97778,
+      "std": 0.40256
+    }
+  },
+  "training_summary": {
+    "total_runs": 48,
+    "train_runs": 36,
+    "test_runs": 12,
+    "train_samples": 468,
+    "test_samples": 156
+  },
+  "evaluation_metrics": {
+    "accuracy": 1.0,
+    "balanced_accuracy": 1.0,
+    "precision_macro": 1.0,
+    "recall_macro": 1.0,
+    "f1_macro": 1.0,
+    "confusion_matrix": [
+      [
+        39,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        39,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        39,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        39
+      ]
+    ],
+    "classification_report": {
+      "NORMAL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 39.0
+      },
+      "RAIL_CORRUGATION": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 39.0
+      },
+      "IMPACT_DEFECT": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 39.0
+      },
+      "THERMAL_STRESS": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 39.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 156.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 156.0
+      }
+    },
+    "top_features": [
+      [
+        "vz_std",
+        0.113
+      ],
+      [
+        "vz_p2p",
+        0.1068
+      ],
+      [
+        "vz_rms",
+        0.1003
+      ],
+      [
+        "temp_mean",
+        0.0926
+      ],
+      [
+        "temp_min",
+        0.0886
+      ],
+      [
+        "temp_max",
+        0.0874
+      ],
+      [
+        "vx_p2p",
+        0.0793
+      ]
+    ]
+  },
+  "anomaly_calibration": {
+    "model": "IsolationForest",
+    "calibrated_threshold": 0.75,
+    "score_interpretation": "Anomaly score is a continuous deviation index in [0, 1], not a class probability. Scores >= 0.75 indicate significant deviation from nominal baseline density.",
+    "holdout_anomaly_detection_accuracy": 0.7692,
+    "holdout_anomaly_detection_f1": 0.8286,
+    "calibration_params": {
+      "dec_min": -0.021651675822032496,
+      "dec_max": 0.1103494134700393,
+      "score_spread": 0.1320010892920718
+    }
+  }
+}
