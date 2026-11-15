@@ -55,3 +55,7 @@ Thumbs.db
 # Database / SQLite local dev files
 *.sqlite3
 *.db
+
+# Generated files
+*.log
+*.tsbuildinfo

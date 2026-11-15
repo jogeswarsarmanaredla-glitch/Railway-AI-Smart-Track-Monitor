@@ -416,7 +416,7 @@ class SensorSimulatorService:
     def get_dashboard_summary(self) -> DashboardSummary:
         """Calculate and return system-wide operational health summary."""
         latest_readings = self.get_latest_readings()
-        active_alerts = [a for a in self._alerts if not a.acknowledged]
+        active_alerts = [a for a in self._alerts if not a.acknowledged and not getattr(a, "is_resolved", False)]
 
         total_tracks = len(TRACK_DEFINITIONS)
         healthy_count = 0
@@ -437,16 +437,19 @@ class SensorSimulatorService:
 
             if reading.status == "CRITICAL" or (track_alerts > 0 and any(a.severity == "CRITICAL" for a in active_alerts)):
                 critical_count += 1
+                effective_status = "CRITICAL"
             elif reading.status == "WARNING" or track_alerts > 0:
                 warning_count += 1
+                effective_status = "WARNING"
             else:
                 healthy_count += 1
+                effective_status = "HEALTHY"
 
             track_summaries.append(
                 TrackStatusSummary(
                     track_segment_id=reading.track_segment_id,
                     track_name=reading.track_name,
-                    status=reading.status,
+                    status=effective_status,
                     latest_rms=reading.vibration_rms,
                     latest_temp=reading.temperature_c,
                     latest_speed=reading.train_speed_kmh,

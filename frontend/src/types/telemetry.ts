@@ -64,6 +64,11 @@ export interface Alert {
   threshold: number;
   timestamp: string;
   acknowledged: boolean;
+  acknowledged_at?: string | null;
+  acknowledged_by?: string | null;
+  is_resolved?: boolean;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
   is_simulated: boolean;
   data_source: string;
 }
@@ -72,6 +77,7 @@ export interface AlertListResponse {
   total: number;
   active_count: number;
   acknowledged_count: number;
+  resolved_count?: number;
   data_source: string;
   is_simulated: boolean;
   alerts: Alert[];
@@ -140,6 +146,7 @@ export interface ModelInfoResponse {
       score_spread: number;
     };
   };
+  normal_baseline_stats?: Record<string, { mean: number; std: number }>;
 }
 
 export interface PredictResponse {
@@ -154,7 +161,9 @@ export interface PredictResponse {
   is_anomaly: boolean;
   window_size: number;
   features_snapshot: Record<string, number>;
+  feature_deviations?: Record<string, number>;
   maintenance_recommendation: string;
+  model_version?: string;
   is_simulated: boolean;
   data_source: string;
   safety_disclaimer: string;
@@ -176,4 +185,81 @@ export interface PredictionHistoryResponse {
   data_source: string;
   is_simulated: boolean;
   predictions: PredictionHistoryItem[];
+  limit?: number;
+  offset?: number;
+}
+
+export interface PredictionDetailResponse extends PredictResponse {
+  model_version: string;
+}
+
+// =============================================================================
+// Track Analytics & Historical Analysis Schemas (Phase 5)
+// =============================================================================
+
+export interface TrackSegmentItem {
+  id: string;
+  code: string;
+  name: string;
+  line_type: string;
+  base_speed_kmh: number;
+  nominal_temperature_c: number;
+  nominal_humidity_pct: number;
+  health_status: string;
+  is_simulated: boolean;
+  data_source: string;
+}
+
+export interface TrackAnalytics {
+  track_id: string;
+  track_name: string;
+  line_type: string;
+  base_speed_kmh: number;
+  nominal_temperature_c: number;
+  nominal_humidity_pct: number;
+  health_status: string;
+  total_telemetry_records: number;
+  vibration_rms: { mean: number; min: number; max: number; latest: number };
+  vibration_z: { mean: number; max: number; latest: number };
+  temperature_c: { mean: number; min: number; max: number; latest: number };
+  humidity_pct: { mean: number; latest: number };
+  speed_kmh: { mean: number; max: number; latest: number };
+  alerts_summary: { total: number; active: number; acknowledged: number; resolved: number };
+  latest_prediction?: PredictResponse | null;
+  data_source: string;
+  is_simulated: boolean;
+}
+
+export interface TelemetryAnalysisResponse {
+  track_segment_id: string;
+  sample_count: number;
+  window_duration_seconds: number;
+  timestamp_latest: string;
+  vibration_metrics: {
+    vx_rms: number;
+    vy_rms: number;
+    vz_rms: number;
+    v_total_rms: number;
+    vz_kurtosis: number;
+    vz_crest_factor: number;
+    lateral_to_vertical_ratio: number;
+    instantaneous: {
+      vx: number;
+      vy: number;
+      vz: number;
+    };
+  };
+  thermal_metrics: {
+    temperature_c: number;
+    temp_mean: number;
+    temp_max: number;
+    temp_min: number;
+    temp_slope_c_per_min: number;
+    humidity_pct: number;
+    train_speed_kmh: number;
+    demonstration_thermal_status: string;
+    demonstration_thresholds_note: string;
+  };
+  is_simulated: boolean;
+  data_source: string;
 }

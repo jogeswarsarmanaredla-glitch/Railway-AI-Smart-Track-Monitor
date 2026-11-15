@@ -3,10 +3,13 @@ import {
   Activity,
   AlertOctagon,
   AlertTriangle,
+  BarChart3,
   Brain,
   CheckCircle2,
   Clock,
+  FileSpreadsheet,
   Gauge,
+  History,
   Pause,
   Play,
   Radio,
@@ -30,7 +33,6 @@ import {
 } from 'recharts';
 import { api } from './services/api';
 import {
-  Alert,
   DashboardSummary,
   HealthResponse,
   ModelInfoResponse,
@@ -39,10 +41,27 @@ import {
   SimulatorStatus,
   TelemetryReading,
 } from './types/telemetry';
+import { TrackAnalyticsPage } from './components/TrackAnalyticsPage';
+import { HistoricalTelemetryPage } from './components/HistoricalTelemetryPage';
+import { PredictionHistoryPage } from './components/PredictionHistoryPage';
+import { ModelTransparencyPage } from './components/ModelTransparencyPage';
+import { AdvancedAlertsSection } from './components/AdvancedAlertsSection';
+import { AiFeatureExplanationChart } from './components/AiFeatureExplanationChart';
 
 export const App: React.FC = () => {
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<'overview' | 'vibration' | 'env' | 'faults' | 'alerts' | 'simulator'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    | 'overview'
+    | 'tracks'
+    | 'vibration'
+    | 'env'
+    | 'historical'
+    | 'faults'
+    | 'prediction-history'
+    | 'alerts'
+    | 'transparency'
+    | 'simulator'
+  >('overview');
   const [selectedTrack, setSelectedTrack] = useState<string>(''); // empty = All tracks
 
   // Backend Data State
@@ -50,7 +69,6 @@ export const App: React.FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [historyReadings, setHistoryReadings] = useState<TelemetryReading[]>([]);
   const [latestReadings, setLatestReadings] = useState<TelemetryReading[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [simulatorStatus, setSimulatorStatus] = useState<SimulatorStatus | null>(null);
 
   // Machine Learning State (Phase 3)
@@ -71,17 +89,15 @@ export const App: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
-  const [alertFilter, setAlertFilter] = useState<string>('ALL');
 
   // Master fetch function
   const fetchAllData = useCallback(async () => {
     try {
-      const [healthData, summaryData, historyData, latestData, alertsData, simData] = await Promise.all([
+      const [healthData, summaryData, historyData, latestData, simData] = await Promise.all([
         api.getHealth().catch(() => null),
         api.getDashboardSummary(),
         api.getTelemetryHistory(selectedTrack || undefined, 35),
         api.getLatestTelemetry(selectedTrack || undefined),
-        api.getAlerts(),
         api.getSimulatorStatus(),
       ]);
 
@@ -89,7 +105,6 @@ export const App: React.FC = () => {
       setSummary(summaryData);
       setHistoryReadings(historyData.readings);
       setLatestReadings(latestData);
-      setAlerts(alertsData.alerts);
       setSimulatorStatus(simData);
       setError(null);
       setLastRefreshed(new Date().toLocaleTimeString());
@@ -191,17 +206,6 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleAcknowledgeAlert = async (alertId: string) => {
-    try {
-      await api.acknowledgeAlert(alertId);
-      setAlerts((prev) =>
-        prev.map((a) => (a.id === alertId ? { ...a, acknowledged: true } : a))
-      );
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to acknowledge alert');
-    }
-  };
-
   // Format telemetry readings for Recharts
   const chartData = useMemo(() => {
     return historyReadings.map((r) => {
@@ -227,13 +231,6 @@ export const App: React.FC = () => {
     if (!latestReadings.length) return null;
     return latestReadings[0];
   }, [latestReadings]);
-
-  // Filtered alerts
-  const filteredAlerts = useMemo(() => {
-    if (alertFilter === 'ALL') return alerts;
-    if (alertFilter === 'ACTIVE') return alerts.filter((a) => !a.acknowledged);
-    return alerts.filter((a) => a.severity.toUpperCase() === alertFilter);
-  }, [alerts, alertFilter]);
 
   // Diagnostic badge styling helper
   const getFaultBadgeStyle = (fault: string) => {
@@ -270,10 +267,10 @@ export const App: React.FC = () => {
           </div>
 
           {/* Navigation Items */}
-          <nav className="p-4 space-y-1.5">
+          <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-270px)]">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'overview'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -284,20 +281,32 @@ export const App: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('tracks')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'tracks'
+                  ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 text-blue-400" />
+              <span>Track Analytics</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('vibration')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'vibration'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <Radio className="w-4 h-4 text-purple-400" />
-              <span>Vibration Telemetry (Vx,Vy,Vz)</span>
+              <span>Vibration Telemetry</span>
             </button>
 
             <button
               onClick={() => setActiveTab('env')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'env'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -308,8 +317,20 @@ export const App: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('historical')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'historical'
+                  ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>Historical & CSV</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('faults')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'faults'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -317,16 +338,28 @@ export const App: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <Brain className="w-4 h-4 text-cyan-400" />
-                <span>AI Fault Detection</span>
+                <span>AI Diagnostics</span>
               </div>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                Phase 3
+                Phase 3/5
               </span>
             </button>
 
             <button
+              onClick={() => setActiveTab('prediction-history')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'prediction-history'
+                  ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <History className="w-4 h-4 text-sky-400" />
+              <span>Prediction Audit</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('alerts')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'alerts'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -334,7 +367,7 @@ export const App: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
-                <span>Issue Alerts</span>
+                <span>Incident Alerts</span>
               </div>
               {summary && summary.active_alerts_count > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30">
@@ -344,15 +377,27 @@ export const App: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('transparency')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'transparency'
+                  ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-teal-400" />
+              <span>Model Transparency</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('simulator')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === 'simulator'
                   ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
               <Sliders className="w-4 h-4 text-emerald-400" />
-              <span>Simulator Control Bench</span>
+              <span>Simulator Control</span>
             </button>
           </nav>
 
@@ -1013,6 +1058,13 @@ export const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* AI Feature Explainability (Standardized Nominal Baseline Z-Scores) */}
+                  {activePrediction.feature_deviations && (
+                    <div className="pt-2 border-t border-slate-800">
+                      <AiFeatureExplanationChart deviations={activePrediction.feature_deviations} />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1169,103 +1221,31 @@ export const App: React.FC = () => {
           )}
 
           {/* ================================================================ */}
-          {/* TAB 5: ISSUE ALERTS MANAGEMENT                                   */}
+          {/* TAB: TRACK SEGMENT ANALYTICS (Phase 5)                           */}
+          {/* ================================================================ */}
+          {activeTab === 'tracks' && <TrackAnalyticsPage />}
+
+          {/* ================================================================ */}
+          {/* TAB: HISTORICAL TELEMETRY & CSV EXPORT (Phase 5)                 */}
+          {/* ================================================================ */}
+          {activeTab === 'historical' && <HistoricalTelemetryPage />}
+
+          {/* ================================================================ */}
+          {/* TAB: PREDICTION AUDIT & EXPLAINABILITY (Phase 5)                 */}
+          {/* ================================================================ */}
+          {activeTab === 'prediction-history' && <PredictionHistoryPage />}
+
+          {/* ================================================================ */}
+          {/* TAB 5: ADVANCED ALERTS MANAGEMENT                                */}
           {/* ================================================================ */}
           {activeTab === 'alerts' && (
-            <div className="space-y-6">
-              <div className="p-6 rounded-xl bg-[#101623] border border-slate-800 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-200">
-                      Railway Safety & Threshold Alerts (GET /api/v1/alerts)
-                    </h3>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">
-                      Threshold violations and simulated safety alarms across track network
-                    </p>
-                  </div>
-
-                  {/* Filter Pills */}
-                  <div className="flex items-center gap-1.5 text-xs font-mono">
-                    {['ALL', 'ACTIVE', 'CRITICAL', 'HIGH', 'MEDIUM'].map((f) => (
-                      <button
-                        key={f}
-                        onClick={() => setAlertFilter(f)}
-                        className={`px-2.5 py-1 rounded border transition-colors ${
-                          alertFilter === f
-                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Alerts List */}
-                {filteredAlerts.length === 0 ? (
-                  <div className="p-8 text-center rounded-lg bg-slate-900/60 border border-slate-800 text-slate-500 text-xs font-mono">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400/60 mx-auto mb-2" />
-                    No alerts match the active filter. Network parameters nominal.
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {filteredAlerts.map((alert) => (
-                      <div
-                        key={alert.id}
-                        className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                          alert.acknowledged
-                            ? 'bg-slate-900/40 border-slate-800/80 opacity-60'
-                            : alert.severity === 'CRITICAL'
-                            ? 'bg-rose-950/20 border-rose-500/40'
-                            : alert.severity === 'HIGH'
-                            ? 'bg-amber-950/20 border-amber-500/40'
-                            : 'bg-slate-900/80 border-slate-800'
-                        }`}
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                                alert.severity === 'CRITICAL'
-                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                                  : alert.severity === 'HIGH'
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                  : 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                              }`}
-                            >
-                              {alert.severity}
-                            </span>
-                            <span className="text-xs font-mono text-cyan-400 font-bold">{alert.track_segment_id}</span>
-                            <span className="text-xs font-medium text-slate-200">{alert.title}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 leading-relaxed">{alert.description}</p>
-                          <span className="text-[10px] font-mono text-slate-500 block">
-                            Logged: {new Date(alert.timestamp).toLocaleString()} • Trigger: {alert.metric} = {alert.value} (Limit: {alert.threshold})
-                          </span>
-                        </div>
-
-                        <div>
-                          {alert.acknowledged ? (
-                            <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Acknowledged
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleAcknowledgeAlert(alert.id)}
-                              className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-slate-700 transition-colors"
-                            >
-                              Acknowledge
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <AdvancedAlertsSection onAlertUpdated={fetchAllData} />
           )}
+
+          {/* ================================================================ */}
+          {/* TAB: MODEL TRANSPARENCY & HOLD-OUT METRICS (Phase 5)             */}
+          {/* ================================================================ */}
+          {activeTab === 'transparency' && <ModelTransparencyPage />}
 
           {/* ================================================================ */}
           {/* TAB 6: SIMULATOR CONTROL BENCH                                   */}
